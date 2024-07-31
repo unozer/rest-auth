@@ -23,9 +23,8 @@ public class SecurityConfig {
     @Bean
     @SuppressWarnings("deprecated")
     public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
-        http.csrf().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+        return http.csrf(csrf -> csrf.disable())
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests((authz) -> authz
                         .requestMatchers(HttpMethod.POST, "/login/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/**").hasAuthority("ROLE_ADMIN")
@@ -33,8 +32,7 @@ public class SecurityConfig {
                 )
                 .addFilter(new CustomAuthenticationFilter(authenticationManager))
                 .addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .headers().cacheControl();
-        return http.build();
+                .build();
 
     }
 }
