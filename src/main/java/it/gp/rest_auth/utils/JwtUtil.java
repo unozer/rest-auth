@@ -1,5 +1,7 @@
 package it.gp.rest_auth.utils;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
 import java.util.List;
 
 public class JwtUtil {
@@ -14,6 +16,11 @@ public class JwtUtil {
 
     public static String createRefreshToken(String username) {
         return "";
+        //TODO
+    }
+
+    public static UsernamePasswordAuthenticationToken parseToken(String token) {
+        return null;
         //TODO
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @RequiredArgsConstructor
@@ -30,8 +31,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/users/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
-                .addFilter(new CustomAuthenticationFilter(authenticationManager)) //Filtro autenticazione
-                .addFilter(null) //Filtro autorizzazione
+                .addFilter(new CustomAuthenticationFilter(authenticationManager))
+                .addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .headers().cacheControl();
         return http.build();
 
