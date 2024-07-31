@@ -1,14 +1,24 @@
 package it.gp.rest_auth.controller;
 
-import it.gp.rest_auth.model.RoleEntity;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gp.rest_auth.model.RoleDTO;
 import it.gp.rest_auth.model.UserEntity;
 import it.gp.rest_auth.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("/users")
@@ -39,8 +49,29 @@ public class UserController {
     }
 
     @PostMapping("/{username}/roles")
-    public ResponseEntity<?> addRoleToUser(@PathVariable String username, @RequestBody RoleEntity role) {
-        UserEntity user = userService.addRoleToUser(username, role.getName());
+    public ResponseEntity<?> addRoleToUser(@PathVariable String username, @RequestBody RoleDTO role) {
+        UserEntity user = userService.addRoleToUser(username, role.getRoleName());
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/refreshToken")
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String authHeader = request.getHeader(AUTHORIZATION);
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                Map<String, String> tokenMap = userService.refreshToken(authHeader, request.getRequestURL().toString());
+                response.addHeader("access_token", tokenMap.get("access_token"));
+                response.addHeader("refresh_token", tokenMap.get("refresh_token"));
+            } catch (Exception e) {
+                log.error(String.format("Error refresh token: %s"), e);
+                response.setStatus(FORBIDDEN.value());
+                Map<String, String> error = new HashMap<>();
+                error.put("errorMessage", e.getMessage());
+                response.setContentType(APPLICATION_JSON_VALUE);
+                new ObjectMapper().writeValue(response.getOutputStream(), error);
+            }
+        } else {
+            throw new RuntimeException("Refresh token is missing");
+        }
     }
 }
